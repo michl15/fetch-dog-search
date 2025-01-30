@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS } from "../../constants";
+import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS } from "../../constants";
 import Select from "react-select";
 import { Button, Col, Container, Row } from "react-bootstrap";
-import DogCard from "./DogCard";
+import DogCard from "../DogCard";
 import styled from "styled-components";
 
 const SearchBarContainer = styled.div`
@@ -21,11 +21,28 @@ const StyledCol = styled(Col)`
     padding: 20px 10px;
 `
 
+const NextButton = styled(Button)`
+    float: right;
+`
+
+const PrevButton = styled(Button)`
+    float: left;
+`
+
+const Footer = styled(Row)`
+    margin: auto;
+    padding: 10px;
+    margin-botton: 50px;
+`
 
 const HomePage = () => {
     const [breedOptions, setBreedOptions] = useState([]);
     const [selectedBreeds, setSelectedBreeds] = useState([]);
     const [dogList, setDogList] = useState([]);
+    const [queryResult, setQueryResult] = useState({});
+    const [prevEnabled, setPrevEnabled] = useState(false);
+    const [nextEnabled, setNextEnabled] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const getBreedsList = async () => {
         // fetch request to get all possible breeds
@@ -58,27 +75,46 @@ const HomePage = () => {
         setSelectedBreeds(formattedList);
     }
 
-
-    // handler for clicking search function
-    const onSearch = async () => {
-        // retrieve dogs using list of IDs
-        const getDogs = async (dogInfoList) => {
-            const myHeaders = new Headers();
-            myHeaders.append("Content-Type", "application/json");
-
-            const dogsResponse = await fetch(API_DOGS, {
-                method: "POST",
-                credentials: "include",
-                headers: myHeaders,
-                body: JSON.stringify(dogInfoList)
-            });
-
-            const newDogList = await dogsResponse.json();
-            setDogList(newDogList);
-        }
+    // retrieve dogs using list of IDs
+    const getDogs = async (dogInfoList) => {
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
+        const dogsResponse = await fetch(API_DOGS, {
+            method: "POST",
+            credentials: "include",
+            headers: myHeaders,
+            body: JSON.stringify(dogInfoList)
+        });
+
+        const newDogList = await dogsResponse.json();
+        setDogList(newDogList);
+        setIsLoading(false);
+    }
+
+    const searchQuery = async (url) => {
+        setDogList([]);
+        setPrevEnabled(false);
+        setNextEnabled(false);
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        const response = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+            headers: myHeaders
+        });
+
+        const result = await response.json();
+        setNextEnabled(result.next);
+        setPrevEnabled(result.prev);
+        setQueryResult(result);
+        console.log(result);
+        getDogs(result.resultIds);
+    }
+
+    // handler for clicking search function
+    const onSearch = () => {
+        setIsLoading(true);
         const params = new URLSearchParams();
         selectedBreeds.forEach((val) => {
             params.append('breeds', val);
@@ -86,16 +122,28 @@ const HomePage = () => {
 
         // get 24 at a time so that rows are even
         params.append('size', 24);
-        const breedsResponse = await fetch(`${API_DOG_SEARCH}?${params}`, {
-            method: "GET",
-            credentials: "include",
-            headers: myHeaders
-        });
-
-       const result = await breedsResponse.json();
-       getDogs(result.resultIds);
+        const fetchURL = `${API_DOG_SEARCH}?${params}`
+        searchQuery(fetchURL);
     }
 
+    // handler for prev
+    const onClickPrev = () => {
+        if (queryResult.prev) {
+            const fetchURL = `${API_BASE_URL}${queryResult.prev}`;
+            searchQuery(fetchURL);
+            document.body.scrollTop = document.documentElement.scrollTop = 0;
+        }
+    }
+
+    // handler for prev
+    const onClickNext = () => {
+        if (queryResult.next) {
+            const fetchURL = `${API_BASE_URL}${queryResult.next}`;
+            searchQuery(fetchURL);
+            document.body.scrollTop = document.documentElement.scrollTop = 0;
+        }
+    }
+    // helper function to render all dogs returned by search
     const renderDogs = () => {
         return (
             <Row>
@@ -133,7 +181,17 @@ const HomePage = () => {
                 <Select isMulti isSearchable isClearable form="" options={breedOptions} onChange={(e) => {breedsOnChange(e)}}/>
                 <SearchButton variant="primary" onClick={onSearch}>Search</SearchButton>
             </SearchBarContainer>
-            {renderDogs()}
+            {!isLoading && renderDogs()}
+            {!isLoading &&
+            <Footer>
+                <Col>
+                    {prevEnabled && <PrevButton onClick={onClickPrev}>« Prev</PrevButton>}    
+                </Col>
+                <Col>
+                    {nextEnabled && <NextButton onClick={onClickNext}>Next »</NextButton>}  
+                </Col>
+            </Footer>
+            }
         </Container>
     );
 }

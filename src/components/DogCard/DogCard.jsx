@@ -20,14 +20,12 @@ const DogCard = ({img, name, age, zipcode, breed}) => {
             <Card.Img src={img}/>
             <Card.Body>
                 <Card.Title>{name}</Card.Title>
-                <Card.Text>
-                    <ListGroup>
-                        <ListGroup.Item>Age: {age}</ListGroup.Item>
-                        <ListGroup.Item>Zipcode: {zipcode}</ListGroup.Item>
-                        <ListGroup.Item>Breed: {breed}</ListGroup.Item>
-                    </ListGroup>
-                    <FavoriteButton variant="light">❤️</FavoriteButton>
-                </Card.Text>
+                <ListGroup>
+                    <ListGroup.Item key="age">Age: {age}</ListGroup.Item>
+                    <ListGroup.Item key="zip">Zipcode: {zipcode}</ListGroup.Item>
+                    <ListGroup.Item key="breed">Breed: {breed}</ListGroup.Item>
+                </ListGroup>
+                <FavoriteButton variant="light">❤️</FavoriteButton>
             </Card.Body>
         </CardContainer>
     )

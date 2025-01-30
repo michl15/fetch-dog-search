@@ -13,6 +13,14 @@ const LoginContainer = styled.div`
     border: 1px solid lightgray;
     border-radius: 15px;
 `
+const StyledHeader = styled.div`
+    text-align: center;
+`
+const SubmitButton = styled(Button)`
+    display: block;
+    margin: 0 auto;
+    margin-top: 20px;
+`
 
 const LoginPage = () => {
     // store input values for login
@@ -43,6 +51,10 @@ const LoginPage = () => {
 
     return (
         <LoginContainer>
+            <StyledHeader>
+                <h1>Welcome to Fetch!</h1>
+                <h2>Please sign in</h2>
+            </StyledHeader>
             <Form>
                 <Form.Group controlId="formEmail">
                     <Form.Label>Email</Form.Label>
@@ -57,9 +69,9 @@ const LoginPage = () => {
                     }}/>
                 </Form.Group>
 
-                <Button variant="primary" onClick={handleSubmit}>
+                <SubmitButton variant="primary" onClick={handleSubmit}>
                     Submit
-                </Button>
+                </SubmitButton>
             </Form>
         </LoginContainer>
     )
