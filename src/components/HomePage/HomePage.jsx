@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS } from "../../constants";
 import Select from "react-select";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import { Button, CloseButton, Col, Container, Offcanvas, Row, Spinner } from "react-bootstrap";
 import DogCard from "../DogCard";
 import styled from "styled-components";
 
@@ -34,6 +34,31 @@ const Footer = styled(Row)`
     padding: 10px;
     margin-botton: 50px;
 `
+const Header = styled.div`
+    margin: 30px 10px;
+    text-align: center;
+    width: 100%;
+`
+const FavoritesButton = styled(Button)`
+    position: fixed;
+    right: 20px;
+`
+
+const PanelClose = styled(CloseButton)`
+    position: fixed;
+    right: 10px;
+    top: 15px;
+`
+const LoadingSpinner = styled(Spinner)`
+    display: block;
+    margin: 0 auto;
+    margin-top: 20px;
+`
+const PanelHeader = styled.h2`
+    background-color: lightgray;
+    text-align: center;
+    padding: 10px;
+`
 
 const HomePage = () => {
     const [breedOptions, setBreedOptions] = useState([]);
@@ -42,7 +67,10 @@ const HomePage = () => {
     const [queryResult, setQueryResult] = useState({});
     const [prevEnabled, setPrevEnabled] = useState(false);
     const [nextEnabled, setNextEnabled] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [favoritesIdList, setFavoritesIdList] = useState([]);
+    const [favoriteDogsList, setFavoriteDogsList] = useState([]);
+    const [openPanel, setOpenPanel] = useState(false);
 
     const getBreedsList = async () => {
         // fetch request to get all possible breeds
@@ -75,19 +103,24 @@ const HomePage = () => {
         setSelectedBreeds(formattedList);
     }
 
-    // retrieve dogs using list of IDs
-    const getDogs = async (dogInfoList) => {
+    //helper function to call API
+    const queryDogs = async (dogInfoList) => {
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
-        const dogsResponse = await fetch(API_DOGS, {
+        return await fetch(API_DOGS, {
             method: "POST",
             credentials: "include",
             headers: myHeaders,
             body: JSON.stringify(dogInfoList)
         });
+    }
 
-        const newDogList = await dogsResponse.json();
+    // retrieve dogs using list of IDs
+    const getDogs = async (dogInfoList) => {
+        const response = await queryDogs(dogInfoList);
+
+        const newDogList = await response.json();
         setDogList(newDogList);
         setIsLoading(false);
     }
@@ -108,7 +141,6 @@ const HomePage = () => {
         setNextEnabled(result.next);
         setPrevEnabled(result.prev);
         setQueryResult(result);
-        console.log(result);
         getDogs(result.resultIds);
     }
 
@@ -144,20 +176,23 @@ const HomePage = () => {
         }
     }
     // helper function to render all dogs returned by search
-    const renderDogs = () => {
+    const renderDogs = (dogs, compact) => {
         return (
             <Row>
             {
-                dogList.map((dog) => {
-                    
+                dogs.map((dog) => {
                     return (
                     <StyledCol>
                         <DogCard
+                            id={dog.id}
                             img={dog.img}
                             name={dog.name}
                             age={dog.age}
                             zipcode={dog.zip_code}
                             breed={dog.breed}
+                            onClickFavorite={onClickFavorite}
+                            fave={favoritesIdList.includes(dog.id)}
+                            compact={compact}
                         />
                     </StyledCol>
                     )
@@ -167,21 +202,67 @@ const HomePage = () => {
         )
     }
 
+    const onClickFavorite = (id) => {
+        let newFaves;
+        if (favoritesIdList.includes(id)) {
+            // remove from favorites if already selected
+            newFaves = favoritesIdList.filter(fave => fave !== id);
+        } else {
+            // add to favorites if not selected
+            newFaves = [...favoritesIdList, id];
+        }
+        setFavoritesIdList(newFaves);
+        console.log(newFaves);
+    }
+
+    const onClickShowFavorites = async () => {
+        setOpenPanel(true);
+        const response = await queryDogs(favoritesIdList);
+
+        const newFavoriteDogs = await response.json();
+        setFavoriteDogsList(newFavoriteDogs);
+    }
+
+    const closePanel = () => {
+        setOpenPanel(false);
+    }
+
     useEffect(() => {
         // get the list of breeds on initial render
         getBreedsList();
-    }, [])
+        // initial search to populate homepage
+        onSearch();
+         // eslint-disable-next-line
+    }, []);
 
 
     return (
         <Container>
-            <SearchBarContainer>
+            <Header>
+                <FavoritesButton onClick={onClickShowFavorites}>Favorites ❤️</FavoritesButton>
                 <h1>Fetch!</h1>
+                <p>Search for dogs by breed. Click the ❤️ on their photo to save them to your favorites, then hit Match to recieve a match!</p>
+
+            </Header>
+            <Offcanvas show={openPanel} onHide={closePanel} placement="end">
+                <Offcanvas.Title>
+                    <PanelHeader>Favorites</PanelHeader>
+                </Offcanvas.Title>
+                <PanelClose onClick={closePanel}/>
+                <Offcanvas.Body>
+                    {favoriteDogsList.length > 0 ? renderDogs(favoriteDogsList, true) : <span>You don't have any favorite dogs yet. Head to Search by Breed to start looking!</span>}
+                </Offcanvas.Body>
+                
+            </Offcanvas>
+            <SearchBarContainer>
                 <h2>Search by breed</h2>
                 <Select isMulti isSearchable isClearable form="" options={breedOptions} onChange={(e) => {breedsOnChange(e)}}/>
                 <SearchButton variant="primary" onClick={onSearch}>Search</SearchButton>
             </SearchBarContainer>
-            {!isLoading && renderDogs()}
+            {isLoading && <LoadingSpinner>
+                    <span className="visually-hidden">Loading...</span>
+                </LoadingSpinner>}
+            {!isLoading && renderDogs(dogList, false)}
             {!isLoading &&
             <Footer>
                 <Col>
