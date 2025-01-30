@@ -3,6 +3,16 @@ import { Button } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
 import { API_LOGIN_ENDPOINT } from "../../constants";
 import { useNavigate } from "react-router";
+import styled from "styled-components";
+
+const LoginContainer = styled.div`
+    width: 30%;
+    margin: auto;
+    margin-top: 10px;
+    padding: 25px 50px;
+    border: 1px solid lightgray;
+    border-radius: 15px;
+`
 
 const LoginPage = () => {
     // store input values for login
@@ -23,7 +33,7 @@ const LoginPage = () => {
             headers: myHeaders
         });
 
-        if (response.status === 200) {
+        if (response.ok) {
             //navigate to home
             navigate("/home");
         } else {
@@ -32,24 +42,26 @@ const LoginPage = () => {
     }
 
     return (
-        <Form>
-            <Form.Group controlId="formEmail">
-                <Form.Label>Email</Form.Label>
-                <Form.Control placeholder="Enter your email" onChange={(e) => {
-                    setEmail(e.target.value);
-                }}/>
-            </Form.Group>
-            <Form.Group controlId="formName">
-                <Form.Label>Name</Form.Label>
-                <Form.Control placeholder="Enter your name" onChange={(e) => {
-                    setName(e.target.value);
-                }}/>
-            </Form.Group>
+        <LoginContainer>
+            <Form>
+                <Form.Group controlId="formEmail">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control placeholder="Enter your email" onChange={(e) => {
+                        setEmail(e.target.value);
+                    }}/>
+                </Form.Group>
+                <Form.Group controlId="formName">
+                    <Form.Label>Name</Form.Label>
+                    <Form.Control placeholder="Enter your name" onChange={(e) => {
+                        setName(e.target.value);
+                    }}/>
+                </Form.Group>
 
-            <Button variant="primary" onClick={handleSubmit}>
-                Submit
-            </Button>
-        </Form>
+                <Button variant="primary" onClick={handleSubmit}>
+                    Submit
+                </Button>
+            </Form>
+        </LoginContainer>
     )
 }
 
