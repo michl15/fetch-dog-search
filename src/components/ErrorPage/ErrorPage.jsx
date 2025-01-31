@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Alert } from "react-bootstrap";
+import React from "react";
+import { Alert, Button } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import styled from "styled-components";
 
@@ -16,17 +16,16 @@ const PageContainer = styled.div`
 const ErrorPage = () => {
     const navigate = useNavigate();
 
-    useEffect(() => {
-        setTimeout(() => {
-            navigate("/");
-        }, 2000)
-    }, [navigate]);
+    const onReturnClick = () => {
+        navigate('/');
+    }
 
     return (
         <PageContainer>
             <Alert variant="danger">
                 <h1>Error</h1>
-                <h4>An unexpected error has occurred. Redirecting you to the login screen...</h4>
+                <p>An unexpected error has occurred.</p>
+                <Button onClick={onReturnClick} variant="danger">Return to Login</Button>
             </Alert>
         </PageContainer>
     )

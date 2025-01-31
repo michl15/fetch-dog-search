@@ -230,8 +230,9 @@ const HomePage = () => {
                         <DogCard
                             dog={dog}
                             onClickFavorite={onClickFavorite}
-                            fave={favoritesIdList.includes(dog.id)}
+                            favoritesList={favoritesIdList}
                             compact={compact}
+                            onClickDelete={onClickDelete}
                         />
                     </StyledCol>
                     )
@@ -253,6 +254,20 @@ const HomePage = () => {
         }
         setFavoritesIdList(newFaves);
         setMatchDisabled(newFaves.length === 0);
+    }
+
+    // handler for clicking "Favorite" on a dog
+    const onClickDelete = (id) => {
+        let newFaves;
+        let newFavesIds;
+        if (favoritesIdList.includes(id)) {
+            // remove from favorites if already selected
+            newFaves = favoriteDogsList.filter(fave => fave.id !== id);
+            newFavesIds = favoritesIdList.filter(fave => fave !== id);
+        } 
+        setFavoriteDogsList(newFaves);
+        setFavoritesIdList(newFavesIds);
+        setMatchDisabled(newFaves?.length === 0);
     }
 
     // handler to open the panel and display the favorite dogs
@@ -402,16 +417,18 @@ const HomePage = () => {
                 <LoadingSpinner>
                     <span className="visually-hidden">Loading...</span>
                 </LoadingSpinner>}
-            {!isLoading && renderDogs(dogList, false)}
             {!isLoading &&
+            <>
+                {renderDogs(dogList, false)}
                 <Footer>
                     <Col>
-                        {prevEnabled && <PrevButton onClick={onClickPrev}>« Prev</PrevButton>}    
+                        {prevEnabled && <PrevButton onClick={onClickPrev} variant='outline-primary'>« Prev</PrevButton>}    
                     </Col>
                     <Col>
-                        {nextEnabled && <NextButton onClick={onClickNext}>Next »</NextButton>}  
+                        {nextEnabled && <NextButton onClick={onClickNext} variant='outline-primary'>Next »</NextButton>}  
                     </Col>
                 </Footer>
+            </>
             }
             <Fade in={!isAtTop}>
                 <ScrollToTopButton size="lg" onClick={onScrollToTopClick}>↑</ScrollToTopButton>
