@@ -7,9 +7,15 @@ const MatchFinderContainer = styled(Card)`
     margin: auto;
     padding: 20px 10px;
 `
-
+/**
+ * Component to contain the matching tooltip/UI
+ * 
+ * @param {function} onMatchFind - handler for the button press
+ * @param {boolean} buttonDisabled - flag to indicate if the button is disabled. when disabled, the user will see a tooltip when hovering over the button
+ * @returns 
+ */
 const MatchFinder = ({onMatchFind, buttonDisabled}) => {
-    // Add a tooltip to instruct users to favorite a dog
+    // Add a tooltip to instruct users to favorite a dog in order to use the match button
     const renderTooltip = () => (
         <Tooltip id="match-tooltip-info">
             You must favorite at least one dog to match!
