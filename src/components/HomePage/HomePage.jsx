@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS, API_DOGS_MATCH } from "../../constants";
+import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS, API_DOGS_MATCH, API_LOGOUT_ENDPOINT } from "../../constants";
 import Select from "react-select";
 import { Button, CloseButton, Col, Container, Form, Offcanvas, Row, Spinner } from "react-bootstrap";
 import DogCard from "../DogCard";
 import styled from "styled-components";
 import MatchFinder from "./MatchFinder/MatchFinder";
 import MatchModal from "./MatchModal/MatchModal";
+import { useNavigate } from "react-router";
 
 const SearchBarContainer = styled.div`
     width: 70%;
     margin: auto;
     padding: 20px 0px;
+    margin-bottom: 15px;
 `
 
 const SearchButton = styled(Button)`
@@ -20,7 +22,7 @@ const SearchButton = styled(Button)`
 `
 
 const StyledCol = styled(Col)`
-    padding: 20px 10px;
+    margin: 15px 0;
 `
 
 const NextButton = styled(Button)`
@@ -34,7 +36,7 @@ const PrevButton = styled(Button)`
 const Footer = styled(Row)`
     margin: auto;
     padding: 10px;
-    margin-botton: 50px;
+    margin-bottom: 50px;
 `
 const Header = styled.div`
     width: 90%;
@@ -77,6 +79,13 @@ const LogoutButton = styled(Button)`
     right: 20px;
 `
 
+const SortResultsContainer = styled.div`
+    text-align: center;
+    width: 30%;
+    margin: auto;
+    margin-top: 10px;
+`
+
 const HomePage = () => {
     const [breedOptions, setBreedOptions] = useState([]);
     const [selectedBreeds, setSelectedBreeds] = useState([]);
@@ -92,6 +101,8 @@ const HomePage = () => {
     const [matchedDog, setMatchedDog] = useState({});
     const [modalIsVisible, setModalIsVisible] = useState(false);
     const [sortOrderAsc, setSortOrderAsc] = useState(true);
+
+    const navigate = useNavigate();
 
     const getBreedsList = async () => {
         // fetch request to get all possible breeds
@@ -112,7 +123,7 @@ const HomePage = () => {
             });
             setBreedOptions(breedOpts);
         } else {
-            // nav back to login
+            navigate("/")
         }
     }
 
@@ -200,11 +211,11 @@ const HomePage = () => {
     // helper function to render all dogs returned by search
     const renderDogs = (dogs, compact) => {
         return (
-            <Row className="my-auto">
+            <Row>
             {
                 dogs.map((dog) => {
                     return (
-                    <StyledCol>
+                    <StyledCol className="d-flex justify-content-center">
                         <DogCard
                             id={dog.id}
                             img={dog.img}
@@ -290,6 +301,19 @@ const HomePage = () => {
         setSortOrderAsc(order);
     }
 
+    const onClickLogout = async () => {
+        const response = await fetch(API_LOGOUT_ENDPOINT, {
+            method: "POST",
+            credentials: "include",
+        });
+
+        if (response.ok) {
+            //navigate to login
+            navigate("/");
+        }
+            
+    }
+
     useEffect(() => {
         // get the list of breeds on initial render
         getBreedsList();
@@ -301,7 +325,7 @@ const HomePage = () => {
     return (
         <Container>
             <FavoritesButton variant="primary" size="sm" onClick={onClickShowFavorites}>Favorites ❤️</FavoritesButton>
-            <LogoutButton variant="primary" size="sm" onClick={onClickShowFavorites}>Logout</LogoutButton>
+            <LogoutButton variant="primary" size="sm" onClick={onClickLogout}>Logout</LogoutButton>
             <Header>              
                 <h1>Fetch!</h1>
                 <p>Search for dogs by breed. Click the ❤️ on their photo to save them to your favorites, then hit Match to recieve a match!</p>
@@ -320,27 +344,29 @@ const HomePage = () => {
             <SearchBarContainer>
                 <h2>Search by breed</h2>
                 <Select isMulti isSearchable isClearable form="" options={breedOptions} onChange={(e) => {breedsOnChange(e)}}/>
-                <h4>Sort Results</h4>
-                <Form>
-                    <Form.Check
-                        type='radio'
-                        inline
-                        id="asc-sort-check"
-                        label="Ascending Alphabetical"
-                        checked={sortOrderAsc}
-                        onChange={() => {onSortClick(true)}}
-                    >
-                    </Form.Check>
-                    <Form.Check
-                        type='radio'
-                        inline
-                        id="des-sort-check"
-                        label="Descending Alphabetical"
-                        checked={!sortOrderAsc}
-                        onChange={() => {onSortClick(false)}}
-                    >
-                    </Form.Check>
-                </Form>
+                <SortResultsContainer>
+                    <h4>Sort Results</h4>
+                    <Form>
+                        <Form.Check
+                            type='radio'
+                            inline
+                            id="asc-sort-check"
+                            label="Ascending Alphabetical"
+                            checked={sortOrderAsc}
+                            onChange={() => {onSortClick(true)}}
+                        >
+                        </Form.Check>
+                        <Form.Check
+                            type='radio'
+                            inline
+                            id="des-sort-check"
+                            label="Descending Alphabetical"
+                            checked={!sortOrderAsc}
+                            onChange={() => {onSortClick(false)}}
+                        >
+                        </Form.Check>
+                    </Form>
+                </SortResultsContainer>
                 <SearchButton variant="primary" onClick={onSearch}>Search</SearchButton>
             </SearchBarContainer>
             {isLoading && 
