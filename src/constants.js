@@ -7,5 +7,6 @@ export const API_DOG_SEARCH = `${API_BASE_URL}/dogs/search`;
 export const API_DOGS = `${API_BASE_URL}/dogs`
 export const API_DOGS_MATCH = `${API_BASE_URL}/dogs/match`
 
-// Auth cookie
-export const AUTH_COOKIE_NAME = "fetch-access-token";
+export const GITHUB_LINK = "https://github.com/michl15/fetch-dog-search";
+export const GITHUB_LOGO_SRC = "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png";
+export const FETCH_LOGO_SRC = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-73F1Ik8k9ihg8bsLQ6moWqnXUuarANyuEA&s";

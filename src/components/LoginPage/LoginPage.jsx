@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { Alert, Button } from "react-bootstrap";
+import { Alert, Button, Image } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
-import { API_LOGIN_ENDPOINT } from "../../constants";
+import { API_LOGIN_ENDPOINT, FETCH_LOGO_SRC } from "../../constants";
 import { useNavigate } from "react-router";
 import styled from "styled-components";
+import PageFooter from "../PageFooter";
 
 const LoginContainer = styled.div`
-    width: 50%;
+    max-width: 70%;
+    width: 500px;
     margin: auto;
     margin-top: 50px;
     padding: 25px 50px;
@@ -75,9 +77,11 @@ const LoginPage = () => {
     }
 
     return (
+        <>
         <LoginContainer>
             <StyledHeader>
                 <h1>Welcome to Fetch!</h1>
+                <Image fluid src={FETCH_LOGO_SRC}/>
                 <h2>Please sign in</h2>
             </StyledHeader>
             <Form>
@@ -104,6 +108,8 @@ const LoginPage = () => {
                 setShowErrorAlert(false);
             }} dismissible>An error has occured, please try to login again</Alert>
         </LoginContainer>
+        <PageFooter/>
+        </>
     )
 }
 
