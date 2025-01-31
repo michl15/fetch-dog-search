@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Button, Image } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
 import { API_LOGIN_ENDPOINT, FETCH_LOGO_SRC } from "../../constants";
 import { useNavigate } from "react-router";
@@ -30,6 +30,11 @@ const StyledFormInput = styled(Form.Group)`
 const ValidationMessage = styled.p`
     color: red;
     font-size: 12px;
+`
+
+const StyledImage = styled.img`
+    height: 250px;
+    margin: 20px 0px;
 `
 
 const LoginPage = () => {
@@ -81,7 +86,7 @@ const LoginPage = () => {
         <LoginContainer>
             <StyledHeader>
                 <h1>Welcome to Fetch!</h1>
-                <Image fluid src={FETCH_LOGO_SRC}/>
+                <StyledImage src={FETCH_LOGO_SRC} alt="logo"/>
                 <h2>Please sign in</h2>
             </StyledHeader>
             <Form>
