@@ -31,11 +31,9 @@ const ValidationMessage = styled.p`
 `
 
 const LoginPage = () => {
-    // store input values for login
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [showErrorAlert, setShowErrorAlert] = useState(false);
-    const [formValid, setFormValid] = useState(false);
     const [isEmailValid, setIsEmailValid] = useState(true);
     const [isNameValid, setIsNameValid] = useState(true);
 
@@ -43,36 +41,37 @@ const LoginPage = () => {
 
     // Handler for login
     const handleSubmit = async () => {
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
+        setIsEmailValid(emailValidation());
+        setIsNameValid(nameValidation())
+        if (emailValidation()&& nameValidation()) {
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
 
-        try {
             const response = await fetch(API_LOGIN_ENDPOINT, {
                 method: "POST",
                 credentials: "include",
                 body: JSON.stringify({name: name, email: email}),
                 headers: myHeaders
             });
-    
+
             if (response.ok) {
                 //navigate to home
                 navigate("/home");
             }
             setShowErrorAlert(true);
-        } catch (e) {
-            setShowErrorAlert(true);
         }
+        
     }
 
-    const emailValidation = (email) => {
+    // Check if email is valid
+    const emailValidation = () => {
         const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-        setIsEmailValid(emailPattern.test(email));
-        setFormValid(isEmailValid && isNameValid);
+        return emailPattern.test(email);
     }
 
-    const nameValidation = (name) => {
-        setIsNameValid(name.trim().length > 0);
-        setFormValid(isEmailValid && isNameValid);
+    // check if name is not empty
+    const nameValidation = () => {
+        return name.trim().length > 0;
     }
 
     return (
@@ -85,7 +84,6 @@ const LoginPage = () => {
                 <StyledFormInput controlId="formEmail">
                     <Form.Label>Email*</Form.Label>
                     <Form.Control placeholder="Enter your email" onChange={(e) => { 
-                        emailValidation(e.target.value);
                         setEmail(e.target.value);
                     }}/>
                     {!isEmailValid && <ValidationMessage>Please enter a valid email</ValidationMessage>}
@@ -93,13 +91,12 @@ const LoginPage = () => {
                 <StyledFormInput controlId="formName">
                     <Form.Label>Name*</Form.Label>
                     <Form.Control placeholder="Enter your name" onChange={(e) => {
-                        nameValidation(e.target.value);
                         setName(e.target.value);
                     }}/>
                     {!isNameValid && <ValidationMessage>Please enter a name</ValidationMessage>}
                 </StyledFormInput>
 
-                <SubmitButton variant="primary" onClick={handleSubmit} disabled={!formValid}>
+                <SubmitButton variant="primary" onClick={handleSubmit}>
                     Submit
                 </SubmitButton>
             </Form>
