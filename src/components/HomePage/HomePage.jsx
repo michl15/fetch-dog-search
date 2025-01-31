@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS } from "../../constants";
+import { API_BASE_URL, API_DOG_BREEDS, API_DOG_SEARCH, API_DOGS, API_DOGS_MATCH } from "../../constants";
 import Select from "react-select";
-import { Button, CloseButton, Col, Container, Offcanvas, Row, Spinner } from "react-bootstrap";
+import { Button, CloseButton, Col, Container, Form, Offcanvas, Row, Spinner } from "react-bootstrap";
 import DogCard from "../DogCard";
 import styled from "styled-components";
+import MatchFinder from "./MatchFinder/MatchFinder";
+import MatchModal from "./MatchModal/MatchModal";
 
 const SearchBarContainer = styled.div`
     width: 70%;
@@ -35,18 +37,21 @@ const Footer = styled(Row)`
     margin-botton: 50px;
 `
 const Header = styled.div`
-    margin: 30px 10px;
+    width: 90%;
+    margin: auto;
+    margin-top: 15px;
     text-align: center;
-    width: 100%;
 `
 const FavoritesButton = styled(Button)`
     position: fixed;
-    right: 20px;
+    left: 30px;
+    z-index: 1;
+    border-radius: 100px;
 `
 
 const PanelClose = styled(CloseButton)`
-    position: fixed;
-    right: 10px;
+    position: absolute;
+    left: 360px;
     top: 15px;
 `
 const LoadingSpinner = styled(Spinner)`
@@ -60,6 +65,18 @@ const PanelHeader = styled.h2`
     padding: 10px;
 `
 
+const ScrollToTopButton = styled(Button)`
+    position: fixed;
+    bottom: 10px;
+    right: 20px;
+    border-radius: 100px;
+`
+
+const LogoutButton = styled(Button)`
+    position: absolute;
+    right: 20px;
+`
+
 const HomePage = () => {
     const [breedOptions, setBreedOptions] = useState([]);
     const [selectedBreeds, setSelectedBreeds] = useState([]);
@@ -71,6 +88,10 @@ const HomePage = () => {
     const [favoritesIdList, setFavoritesIdList] = useState([]);
     const [favoriteDogsList, setFavoriteDogsList] = useState([]);
     const [openPanel, setOpenPanel] = useState(false);
+    const [matchDisabled, setMatchDisabled] = useState(true);
+    const [matchedDog, setMatchedDog] = useState({});
+    const [modalIsVisible, setModalIsVisible] = useState(false);
+    const [sortOrderAsc, setSortOrderAsc] = useState(true);
 
     const getBreedsList = async () => {
         // fetch request to get all possible breeds
@@ -126,6 +147,7 @@ const HomePage = () => {
     }
 
     const searchQuery = async (url) => {
+        setIsLoading(true);
         setDogList([]);
         setPrevEnabled(false);
         setNextEnabled(false);
@@ -146,7 +168,6 @@ const HomePage = () => {
 
     // handler for clicking search function
     const onSearch = () => {
-        setIsLoading(true);
         const params = new URLSearchParams();
         selectedBreeds.forEach((val) => {
             params.append('breeds', val);
@@ -154,6 +175,7 @@ const HomePage = () => {
 
         // get 24 at a time so that rows are even
         params.append('size', 24);
+        params.append('sort', `breed:${sortOrderAsc ? 'asc' : 'desc'}`)
         const fetchURL = `${API_DOG_SEARCH}?${params}`
         searchQuery(fetchURL);
     }
@@ -178,7 +200,7 @@ const HomePage = () => {
     // helper function to render all dogs returned by search
     const renderDogs = (dogs, compact) => {
         return (
-            <Row>
+            <Row className="my-auto">
             {
                 dogs.map((dog) => {
                     return (
@@ -193,6 +215,7 @@ const HomePage = () => {
                             onClickFavorite={onClickFavorite}
                             fave={favoritesIdList.includes(dog.id)}
                             compact={compact}
+                            key={dog.id}
                         />
                     </StyledCol>
                     )
@@ -212,7 +235,7 @@ const HomePage = () => {
             newFaves = [...favoritesIdList, id];
         }
         setFavoritesIdList(newFaves);
-        console.log(newFaves);
+        setMatchDisabled(newFaves.length === 0);
     }
 
     const onClickShowFavorites = async () => {
@@ -227,6 +250,46 @@ const HomePage = () => {
         setOpenPanel(false);
     }
 
+    const onMatchFind = async () => {
+        // call the match API
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        console.log(favoritesIdList);
+
+        const response = await fetch(API_DOGS_MATCH, {
+            method: "POST",
+            credentials: "include",
+            headers: myHeaders,
+            body: JSON.stringify(favoritesIdList)
+        });
+
+        const matchResponse = await response.json();
+
+        // call the dog API to get back the selected dog
+        const matchedDogResponse = await fetch(API_DOGS, {
+            method: "POST",
+            credentials: "include",
+            headers: myHeaders,
+            body: JSON.stringify([matchResponse.match])
+        });
+
+        const matchedDog = await matchedDogResponse.json();
+        setMatchedDog(matchedDog[0]);
+        setModalIsVisible(true);
+    }
+
+    const onScrollToTopClick = () => {
+        document.body.scrollTop = document.documentElement.scrollTop = 0;
+    }
+
+    const onModalClose = () => {
+        setModalIsVisible(false);
+    }
+
+    const onSortClick = (order) => {
+        setSortOrderAsc(order);
+    }
+
     useEffect(() => {
         // get the list of breeds on initial render
         getBreedsList();
@@ -235,16 +298,16 @@ const HomePage = () => {
          // eslint-disable-next-line
     }, []);
 
-
     return (
         <Container>
-            <Header>
-                <FavoritesButton onClick={onClickShowFavorites}>Favorites ❤️</FavoritesButton>
+            <FavoritesButton variant="primary" size="sm" onClick={onClickShowFavorites}>Favorites ❤️</FavoritesButton>
+            <LogoutButton variant="primary" size="sm" onClick={onClickShowFavorites}>Logout</LogoutButton>
+            <Header>              
                 <h1>Fetch!</h1>
                 <p>Search for dogs by breed. Click the ❤️ on their photo to save them to your favorites, then hit Match to recieve a match!</p>
-
+                <MatchFinder onMatchFind={onMatchFind} buttonDisabled={matchDisabled}/>
             </Header>
-            <Offcanvas show={openPanel} onHide={closePanel} placement="end">
+            <Offcanvas show={openPanel} onHide={closePanel}>
                 <Offcanvas.Title>
                     <PanelHeader>Favorites</PanelHeader>
                 </Offcanvas.Title>
@@ -252,27 +315,50 @@ const HomePage = () => {
                 <Offcanvas.Body>
                     {favoriteDogsList.length > 0 ? renderDogs(favoriteDogsList, true) : <span>You don't have any favorite dogs yet. Head to Search by Breed to start looking!</span>}
                 </Offcanvas.Body>
-                
             </Offcanvas>
+            <MatchModal dog={matchedDog} isVisible={modalIsVisible} onClose={onModalClose}/>
             <SearchBarContainer>
                 <h2>Search by breed</h2>
                 <Select isMulti isSearchable isClearable form="" options={breedOptions} onChange={(e) => {breedsOnChange(e)}}/>
+                <h4>Sort Results</h4>
+                <Form>
+                    <Form.Check
+                        type='radio'
+                        inline
+                        id="asc-sort-check"
+                        label="Ascending Alphabetical"
+                        checked={sortOrderAsc}
+                        onChange={() => {onSortClick(true)}}
+                    >
+                    </Form.Check>
+                    <Form.Check
+                        type='radio'
+                        inline
+                        id="des-sort-check"
+                        label="Descending Alphabetical"
+                        checked={!sortOrderAsc}
+                        onChange={() => {onSortClick(false)}}
+                    >
+                    </Form.Check>
+                </Form>
                 <SearchButton variant="primary" onClick={onSearch}>Search</SearchButton>
             </SearchBarContainer>
-            {isLoading && <LoadingSpinner>
+            {isLoading && 
+                <LoadingSpinner>
                     <span className="visually-hidden">Loading...</span>
                 </LoadingSpinner>}
             {!isLoading && renderDogs(dogList, false)}
             {!isLoading &&
-            <Footer>
-                <Col>
-                    {prevEnabled && <PrevButton onClick={onClickPrev}>« Prev</PrevButton>}    
-                </Col>
-                <Col>
-                    {nextEnabled && <NextButton onClick={onClickNext}>Next »</NextButton>}  
-                </Col>
-            </Footer>
+                <Footer>
+                    <Col>
+                        {prevEnabled && <PrevButton onClick={onClickPrev}>« Prev</PrevButton>}    
+                    </Col>
+                    <Col>
+                        {nextEnabled && <NextButton onClick={onClickNext}>Next »</NextButton>}  
+                    </Col>
+                </Footer>
             }
+            <ScrollToTopButton size="lg" onClick={onScrollToTopClick}>↑</ScrollToTopButton>
         </Container>
     );
 }
